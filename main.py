@@ -1,25 +1,39 @@
-from typing import Union
 
 from fastapi import FastAPI
 from pydantic import BaseModel
+from stravalib import Client
 
 app = FastAPI()
 
-class Item(BaseModel):
-    name: str
-    price: float
-    is_offer: Union[bool, None] = None
-
+class RequestBody(BaseModel):
+    state: str | None = None
+    code: str
+    error: str | None = None
 
 @app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def login():
+    c = Client()
+    url = c.authorization_url(
+        client_id = #STRAVA_CLIENT_ID,
+        redirect_uri = #logged_in,
+        approval_prompt="auto"
+    )
 
+    return #login.html
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+@app.post("/strava-oauth")
+def logged_in(request_body: RequestBody):
+    if request_body.error:
+        return # login_error.html
+    else:
+        client = Client()
+        access_token = client.exchange_code_for_token(
+            client_id=#"STRAVA_CLIENT_ID",
+            client_secret=#"STRAVA_CLIENT_SECRET",
+            code=request_body.code,
+        )
 
-@app.put("/items/{item_id}")
-def update_item(item_id: int, item: Item):
-    return {"item_name": item.name, "item_id": item_id}
+        # Probably here you'd want to store this somewhere -- e.g. in a database.
+        strava_athlete = client.get_athlete()
+
+        return #login_results.html
